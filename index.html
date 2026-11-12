@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluador de scouting</title>
+<style>
+  :root {
+    --fondo: #0B1F17;
+    --fondo-2: #123325;
+    --superficie: #FFFFFF;
+    --papel: #F3F6F4;
+    --tinta: #12201A;
+    --tinta-suave: #5A6B62;
+    --linea: #D5DDD8;
+    --cancha: #1F9D55;
+    --cancha-oscura: #157A41;
+    --cancha-clara: #DDF1E4;
+    --oro: #F4C20D;
+    --rojo: #D8453A;
+    --gris: #8795A1;
+    --marcador: Bahnschrift, "DIN Alternate", "Arial Narrow", "Helvetica Neue Condensed", "DejaVu Sans Condensed", sans-serif;
+    --texto: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --sombra: 0 18px 50px rgba(0, 0, 0, .28);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--texto);
+    line-height: 1.5;
+    color: var(--tinta);
+    background:
+      radial-gradient(900px 420px at 85% -10%, rgba(31,157,85,.35), transparent 60%),
+      radial-gradient(700px 400px at -10% 10%, rgba(244,194,13,.10), transparent 60%),
+      linear-gradient(180deg, var(--fondo) 0%, var(--fondo-2) 360px, var(--papel) 360px);
+    background-repeat: no-repeat;
+  }
+  .pagina { max-width: 1040px; margin: 0 auto; padding: 44px 16px 56px; }
+
+  /* ---------- Cabecera ---------- */
+  header { color: #fff; margin-bottom: 30px; position: relative; }
+  .insignia {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--oro); font-weight: 700; margin-bottom: 14px;
+  }
+  .insignia::before {
+    content: ""; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--oro); box-shadow: 0 0 0 4px rgba(244,194,13,.22);
+  }
+  h1 {
+    font-family: var(--marcador);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    line-height: 1.02; margin: 0 0 12px; letter-spacing: -.01em;
+  }
+  h1 span { color: #5BE09A; }
+  header p { margin: 0; max-width: 58ch; color: #BFD3C8; font-size: 1.05rem; }
+
+  .datos-modelo {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; padding: 0; list-style: none;
+  }
+  .datos-modelo li {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 10px; padding: 8px 14px; color: #fff; min-width: 96px;
+    backdrop-filter: blur(4px);
+  }
+  .datos-modelo b {
+    display: block; font-family: var(--marcador); font-size: 1.25rem; line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .datos-modelo small { color: #A9C2B4; font-size: .74rem; letter-spacing: .04em; text-transform: uppercase; }
+
+  /* ---------- Tablero ---------- */
+  .tablero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    background: var(--superficie);
+    border-radius: 18px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+  }
+  .ficha, .informe { padding: 32px; }
+  .ficha { border-right: 1px solid var(--linea); }
+  .informe { background: linear-gradient(180deg, #fff 0%, #F8FBF9 100%); }
+  h2 { font-family: var(--marcador); font-size: 1.4rem; margin: 0 0 20px; display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ""; width: 6px; height: 22px; border-radius: 3px; background: var(--cancha); }
+
+  .campo { margin-bottom: 20px; }
+  .campo-cab { display: flex; justify-content: space-between; align-items: baseline; }
+  label, legend { display: block; font-weight: 700; font-size: .92rem; margin-bottom: 8px; padding: 0; }
+  .valor-vivo { font-family: var(--marcador); font-size: 1.5rem; color: var(--cancha-oscura); font-variant-numeric: tabular-nums; }
+  .valor-vivo small { font-size: .8rem; color: var(--tinta-suave); margin-left: 2px; }
+
+  input[type="number"] {
+    width: 100%; font: inherit; font-size: 1.05rem; padding: 10px 12px;
+    border: 1.5px solid var(--linea); border-radius: 10px; background: #fff; color: var(--tinta);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="number"]:focus { outline: 0; border-color: var(--cancha); box-shadow: 0 0 0 4px rgba(31,157,85,.16); }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 8px; margin: 0 0 10px;
+    border-radius: 99px; background: var(--cancha-clara); outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--cancha); border: 4px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--cancha); border: 4px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: pointer;
+  }
+
+  fieldset { border: 0; margin: 0 0 20px; padding: 0; }
+  .posiciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .posiciones input { position: absolute; opacity: 0; pointer-events: none; }
+  .posiciones label {
+    margin: 0; padding: 12px; border: 1.5px solid var(--linea); border-radius: 10px;
+    font-weight: 600; cursor: pointer; text-align: center; background: #fff;
+    transition: all .15s;
+  }
+  .posiciones label:hover { border-color: var(--cancha); }
+  .posiciones input:checked + label {
+    background: var(--cancha); border-color: var(--cancha); color: #fff;
+    box-shadow: 0 6px 16px rgba(31,157,85,.35);
+  }
+  :focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+  .posiciones input:focus-visible + label { outline: 3px solid var(--oro); outline-offset: 2px; }
+
+  .ayuda { font-size: .82rem; color: var(--tinta-suave); margin: 2px 0 0; }
+  .ejemplos { margin: 0 0 22px; }
+  .ejemplos p { margin: 0 0 8px; font-size: .88rem; color: var(--tinta-suave); }
+  .ejemplos button {
+    font: inherit; font-size: .85rem; background: var(--papel); border: 1px solid var(--linea);
+    border-radius: 999px; padding: 6px 14px; margin: 0 6px 8px 0; cursor: pointer; color: var(--tinta);
+    transition: all .15s;
+  }
+  .ejemplos button:hover { background: var(--cancha-clara); border-color: var(--cancha); }
+
+  .evaluar {
+    width: 100%; font-family: var(--marcador); font-size: 1.15rem; letter-spacing: .02em;
+    padding: 14px 16px; color: #fff; border: 0; border-radius: 12px; cursor: pointer;
+    background: linear-gradient(180deg, #25B365, var(--cancha-oscura));
+    box-shadow: 0 8px 20px rgba(31,157,85,.38);
+    transition: transform .12s, box-shadow .12s;
+  }
+  .evaluar:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(31,157,85,.45); }
+  .evaluar:active { transform: translateY(1px); }
+  .evaluar:disabled { background: var(--gris); box-shadow: none; cursor: progress; transform: none; }
+
+  /* ---------- Informe ---------- */
+  .vacio {
+    color: var(--tinta-suave); max-width: 40ch; text-align: center; margin: 24px auto 0;
+  }
+  .vacio svg { display: block; margin: 0 auto 14px; width: 100%; max-width: 280px; height: auto; }
+  .resultado[hidden], .vacio[hidden], .error[hidden] { display: none; }
+
+  .veredicto { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; margin: 0; color: var(--tinta-suave); }
+  .perfil {
+    display: inline-block; font-family: var(--marcador); font-size: 1.6rem; line-height: 1;
+    margin: 8px 0 6px; padding: 8px 16px; border-radius: 999px;
+    background: var(--cancha); color: #fff;
+  }
+  .perfil.bajo { background: var(--gris); }
+  .porcentaje {
+    font-family: var(--marcador); font-size: clamp(3.8rem, 10vw, 5.6rem); line-height: 1; margin: 6px 0 0;
+    font-variant-numeric: tabular-nums; color: var(--cancha-oscura);
+  }
+  .porcentaje.bajo { color: #5E6C78; }
+  .porcentaje-etiqueta { margin: 2px 0 22px; color: var(--tinta-suave); }
+
+  .cancha { position: relative; padding-top: 24px; }
+  .cancha-pista {
+    position: relative; height: 30px; border-radius: 8px; overflow: hidden; border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--linea);
+    background: repeating-linear-gradient(90deg, #CDE9D7 0 10%, #D9EFE0 10% 20%);
+  }
+  .cancha-relleno {
+    height: 100%; width: 0; border-radius: 0 6px 6px 0;
+    background: linear-gradient(90deg, var(--cancha-oscura), #38D27F);
+    transition: width .8s cubic-bezier(.2,.7,.2,1);
+  }
+  .cancha-relleno.bajo { background: linear-gradient(90deg, #6B7A87, #9AA8B4); }
+  .medio-campo { position: absolute; left: 50%; top: 20px; bottom: 22px; width: 3px; background: var(--tinta); border-radius: 2px; }
+  .medio-campo span {
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: .74rem; color: var(--tinta-suave); white-space: nowrap; font-weight: 600;
+  }
+  .escala { display: flex; justify-content: space-between; font-size: .8rem; color: var(--tinta-suave); margin-top: 6px; }
+
+  .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0 0; padding: 0; list-style: none; }
+  .resumen li { background: var(--papel); border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; }
+  .resumen small { display: block; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
+  .resumen b { font-family: var(--marcador); font-size: 1.15rem; }
+
+  .nota { margin: 18px 0 0; font-size: .86rem; color: var(--tinta-suave); max-width: 54ch; }
+
+  .error {
+    border-left: 5px solid var(--rojo); background: #FDEEEC; padding: 14px 16px;
+    border-radius: 0 10px 10px 0; margin: 0;
+  }
+  .error strong { display: block; }
+  .error code { font-size: .85rem; background: #fff; padding: 1px 6px; border-radius: 4px; }
+
+  footer { text-align: center; margin-top: 26px; font-size: .82rem; color: var(--tinta-suave); }
+  footer a { color: var(--cancha-oscura); }
+
+  @media (max-width: 800px) {
+    .tablero { grid-template-columns: 1fr; }
+    .ficha { border-right: 0; border-bottom: 1px solid var(--linea); }
+    .ficha, .informe { padding: 24px 18px; }
+    .resumen { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cancha-relleno, .evaluar, .posiciones label { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <div class="insignia">Scouting deportivo · Random Forest</div>
+    <h1>Evaluador de <span>scouting</span></h1>
+    <p>Estima si un jugador está en el 25 % de mayor valor de mercado a partir de su edad, estatura y posición.</p>
+    <ul class="datos-modelo" id="datosModelo" hidden>
+      <li><b id="mAuc">–</b><small>AUC</small></li>
+      <li><b id="mF1">–</b><small>F1 Élite</small></li>
+      <li><b id="mRecall">–</b><small>Recall</small></li>
+      <li><b id="mAcc">–</b><small>Accuracy</small></li>
+    </ul>
+  </header>
+
+  <main class="tablero">
+    <form class="ficha" id="formulario" novalidate>
+      <h2>Ficha del jugador</h2>
+
+      <div class="campo">
+        <div class="campo-cab">
+          <label for="edad">Edad</label>
+          <span class="valor-vivo"><span id="vEdad">21</span><small>años</small></span>
+        </div>
+        <input type="range" id="edadRango" min="15" max="45" step="1" value="21" aria-hidden="true" tabindex="-1">
+        <input type="number" id="edad" name="edad" min="15" max="45" step="1" inputmode="numeric" required value="21">
+        <p class="ayuda">Entre 15 y 45 años.</p>
+      </div>
+
+      <div class="campo">
+        <div class="campo-cab">
+          <label for="estatura">Estatura</label>
+          <span class="valor-vivo"><span id="vEst">178</span><small>cm</small></span>
+        </div>
+        <input type="range" id="estRango" min="150" max="210" step="1" value="178" aria-hidden="true" tabindex="-1">
+        <input type="number" id="estatura" name="estatura_cm" min="150" max="210" step="1" inputmode="numeric" required value="178">
+        <p class="ayuda">Entre 150 y 210 cm.</p>
+      </div>
+
+      <fieldset>
+        <legend>Posición</legend>
+        <div class="posiciones">
+          <input type="radio" name="posicion" id="pos-gk" value="Goalkeeper"><label for="pos-gk">🧤 Portero</label>
+          <input type="radio" name="posicion" id="pos-df" value="Defender"><label for="pos-df">🛡️ Defensa</label>
+          <input type="radio" name="posicion" id="pos-mf" value="Midfield"><label for="pos-mf">⚙️ Mediocampista</label>
+          <input type="radio" name="posicion" id="pos-at" value="Attack" checked><label for="pos-at">⚽ Delantero</label>
+        </div>
+      </fieldset>
+
+      <div class="ejemplos">
+        <p>Probar con un jugador de ejemplo:</p>
+        <button type="button" data-edad="21" data-estatura="178" data-posicion="Attack">Delantero de 21 años</button>
+        <button type="button" data-edad="26" data-estatura="180" data-posicion="Midfield">Mediocampista de 26 años</button>
+        <button type="button" data-edad="34" data-estatura="192" data-posicion="Goalkeeper">Portero de 34 años</button>
+      </div>
+
+      <button type="submit" class="evaluar" id="boton">Evaluar jugador</button>
+    </form>
+
+    <section class="informe" aria-live="polite">
+      <h2>Informe</h2>
+
+      <div class="vacio" id="vacio">
+        <svg viewBox="0 0 280 170" aria-hidden="true">
+          <rect x="4" y="4" width="272" height="162" rx="10" fill="#DDF1E4" stroke="#1F9D55" stroke-width="3"/>
+          <line x1="140" y1="4" x2="140" y2="166" stroke="#1F9D55" stroke-width="3"/>
+          <circle cx="140" cy="85" r="26" fill="none" stroke="#1F9D55" stroke-width="3"/>
+          <circle cx="140" cy="85" r="3.5" fill="#1F9D55"/>
+          <rect x="4" y="52" width="40" height="66" fill="none" stroke="#1F9D55" stroke-width="3"/>
+          <rect x="236" y="52" width="40" height="66" fill="none" stroke="#1F9D55" stroke-width="3"/>
+        </svg>
+        Completa la ficha y pulsa «Evaluar jugador» para ver la probabilidad de que sea Élite.
+      </div>
+
+      <p class="error" id="error" role="alert" hidden></p>
+
+      <div class="resultado" id="resultado" hidden>
+        <p class="veredicto">Resultado del modelo</p>
+        <span class="perfil" id="perfil"></span>
+        <p class="porcentaje" id="porcentaje"></p>
+        <p class="porcentaje-etiqueta">de probabilidad de ser Élite</p>
+
+        <div class="cancha">
+          <div class="cancha-pista" role="progressbar" id="barra" aria-label="Probabilidad de ser Élite" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="cancha-relleno" id="relleno"></div>
+          </div>
+          <div class="medio-campo"><span>Umbral 50 %</span></div>
+          <div class="escala"><span>0 %</span><span>100 %</span></div>
+        </div>
+
+        <ul class="resumen">
+          <li><small>Edad</small><b id="rEdad"></b></li>
+          <li><small>Estatura</small><b id="rEst"></b></li>
+          <li><small>Posición</small><b id="rPos"></b></li>
+        </ul>
+
+        <p class="nota" id="nota"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>API REST con FastAPI · documentación en <a href="/docs">/docs</a></footer>
+</div>
+
+<script>
+  // Si la página se sirve desde la propia API (puerto 8000) se usa la misma dirección.
+  // Si se abre como archivo o desde otro puerto, se apunta a la API local.
+  const API = location.port === "8000" ? "" : "http://127.0.0.1:8000";
+
+  const formulario = document.getElementById("formulario");
+  const boton = document.getElementById("boton");
+  const vacio = document.getElementById("vacio");
+  const error = document.getElementById("error");
+  const resultado = document.getElementById("resultado");
+  const perfil = document.getElementById("perfil");
+  const porcentaje = document.getElementById("porcentaje");
+  const barra = document.getElementById("barra");
+  const relleno = document.getElementById("relleno");
+  const nota = document.getElementById("nota");
+
+  const formatoEuro = new Intl.NumberFormat("es-CO");
+  const formatoPorcentaje = new Intl.NumberFormat("es-CO", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const NOMBRE_POS = { Goalkeeper: "Portero", Defender: "Defensa", Midfield: "Mediocampista", Attack: "Delantero" };
+
+  // Sliders sincronizados con los campos numéricos
+  function enlazar(rango, numero, etiqueta) {
+    const r = document.getElementById(rango), n = document.getElementById(numero), e = document.getElementById(etiqueta);
+    r.addEventListener("input", () => { n.value = r.value; e.textContent = r.value; });
+    n.addEventListener("input", () => { if (n.value !== "") { r.value = n.value; e.textContent = n.value; } });
+  }
+  enlazar("edadRango", "edad", "vEdad");
+  enlazar("estRango", "estatura", "vEst");
+
+  function sincronizar() {
+    document.getElementById("edadRango").value = formulario.edad.value;
+    document.getElementById("vEdad").textContent = formulario.edad.value;
+    document.getElementById("estRango").value = formulario.estatura_cm.value;
+    document.getElementById("vEst").textContent = formulario.estatura_cm.value;
+  }
+
+  function mostrarError(titulo, detalle) {
+    resultado.hidden = true;
+    vacio.hidden = true;
+    error.hidden = false;
+    error.innerHTML = "";
+    const t = document.createElement("strong");
+    t.textContent = titulo;
+    error.appendChild(t);
+    error.appendChild(document.createTextNode(detalle));
+  }
+
+  function mostrarResultado(datos, entrada) {
+    error.hidden = true;
+    vacio.hidden = true;
+    resultado.hidden = false;
+
+    const prob = datos.probabilidad_elite;
+    const bajo = datos.es_elite === 0;
+    perfil.textContent = "Perfil " + datos.prediccion;
+    perfil.classList.toggle("bajo", bajo);
+    porcentaje.textContent = formatoPorcentaje.format(prob) + " %";
+    porcentaje.classList.toggle("bajo", bajo);
+    barra.setAttribute("aria-valuenow", prob.toFixed(1));
+    relleno.classList.toggle("bajo", bajo);
+    relleno.style.width = "0";
+    requestAnimationFrame(() => requestAnimationFrame(() => { relleno.style.width = prob + "%"; }));
+
+    document.getElementById("rEdad").textContent = entrada.edad + " años";
+    document.getElementById("rEst").textContent = entrada.estatura + " cm";
+    document.getElementById("rPos").textContent = NOMBRE_POS[entrada.posicion];
+
+    nota.textContent =
+      "Élite significa un valor de mercado de al menos " + formatoEuro.format(datos.umbral_elite_eur) +
+      " EUR (percentil 75). El modelo usa solo edad, estatura y posición, así que sirve como filtro inicial, no como valoración completa.";
+  }
+
+  async function evaluar(evento) {
+    evento.preventDefault();
+
+    const edad = Number(formulario.edad.value);
+    const estatura = Number(formulario.estatura_cm.value);
+    const posicion = formulario.posicion.value;
+
+    if (!Number.isInteger(edad) || edad < 15 || edad > 45) {
+      return mostrarError("Edad fuera de rango.", " Escribe un número entero entre 15 y 45.");
+    }
+    if (!(estatura >= 150 && estatura <= 210)) {
+      return mostrarError("Estatura fuera de rango.", " Escribe un valor entre 150 y 210 cm.");
+    }
+
+    boton.disabled = true;
+    boton.textContent = "Evaluando…";
+    try {
+      const respuesta = await fetch(API + "/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edad: edad, estatura_cm: estatura, posicion: posicion })
+      });
+      if (!respuesta.ok) {
+        const cuerpo = await respuesta.json().catch(() => ({}));
+        const detalle = Array.isArray(cuerpo.detail)
+          ? cuerpo.detail.map(d => d.loc.slice(1).join(".") + ": " + d.msg).join(" · ")
+          : "El servidor respondió con el código " + respuesta.status + ".";
+        return mostrarError("La API rechazó los datos.", " " + detalle);
+      }
+      mostrarResultado(await respuesta.json(), { edad, estatura, posicion });
+    } catch (e) {
+      mostrarError(
+        "No se pudo conectar con la API.",
+        " Inicia el servidor desde la carpeta del proyecto con: uvicorn main_api:app --reload"
+      );
+    } finally {
+      boton.disabled = false;
+      boton.textContent = "Evaluar jugador";
+    }
+  }
+
+  formulario.addEventListener("submit", evaluar);
+
+  document.querySelectorAll(".ejemplos button").forEach(b => {
+    b.addEventListener("click", () => {
+      formulario.edad.value = b.dataset.edad;
+      formulario.estatura_cm.value = b.dataset.estatura;
+      formulario.posicion.value = b.dataset.posicion;
+      sincronizar();
+      formulario.requestSubmit();
+    });
+  });
+
+  // Métricas del modelo en la cabecera (si la API responde)
+  fetch(API + "/salud").then(r => r.json()).then(s => {
+    const m = s.metricas_test;
+    if (!m) return;
+    document.getElementById("mAuc").textContent = m.auc.toFixed(3);
+    document.getElementById("mF1").textContent = m.f1.toFixed(3);
+    document.getElementById("mRecall").textContent = m.recall.toFixed(3);
+    document.getElementById("mAcc").textContent = m.acc_test.toFixed(3);
+    document.getElementById("datosModelo").hidden = false;
+  }).catch(() => {});
+</script>
+</body>
+</html>

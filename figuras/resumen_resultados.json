@@ -1,0 +1,105 @@
+{
+  "fecha_filas": 41495,
+  "train": 33196,
+  "test": 8299,
+  "umbral_elite_eur": 700000.0,
+  "estandar": 30418,
+  "elite": 11077,
+  "baseline_test": 0.7331003735389806,
+  "resultados": {
+    "arbol_libre": {
+      "modelo": "Árbol sin control",
+      "acc_train": 0.7575009037233401,
+      "acc_test": 0.7159898782985902,
+      "precision": 0.4022038567493113,
+      "recall": 0.13182844243792324,
+      "f1": 0.1985719143148589,
+      "auc": 0.652247578298108,
+      "tn": 5650,
+      "fp": 434,
+      "fn": 1923,
+      "tp": 292
+    },
+    "arbol_podado": {
+      "modelo": "Árbol con poda previa",
+      "acc_train": 0.7330401253163031,
+      "acc_test": 0.7331003735389806,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "auc": 0.6734882821833681,
+      "tn": 6084,
+      "fp": 0,
+      "fn": 2215,
+      "tp": 0
+    },
+    "arbol_optimo": {
+      "modelo": "Árbol único optimizado",
+      "acc_train": 0.5960959151705024,
+      "acc_test": 0.5852512350885649,
+      "precision": 0.3688261706221937,
+      "recall": 0.7787810383747178,
+      "f1": 0.5005803830528148,
+      "auc": 0.6830135440180587,
+      "tn": 3132,
+      "fp": 2952,
+      "fn": 490,
+      "tp": 1725
+    },
+    "random_forest": {
+      "modelo": "Random Forest optimizado",
+      "acc_train": 0.6281479696348957,
+      "acc_test": 0.6128449210748282,
+      "precision": 0.3852345906163753,
+      "recall": 0.7562076749435666,
+      "f1": 0.5104373000152369,
+      "auc": 0.6928698373263402,
+      "tn": 3411,
+      "fp": 2673,
+      "fn": 540,
+      "tp": 1675
+    }
+  },
+  "mejores_params_arbol": {
+    "class_weight": "balanced",
+    "criterion": "gini",
+    "max_depth": 5,
+    "min_samples_leaf": 15
+  },
+  "mejores_params_rf": {
+    "class_weight": "balanced_subsample",
+    "max_depth": 10,
+    "min_samples_leaf": 20,
+    "n_estimators": 100
+  },
+  "f1_cv_rf": 0.511415969139543,
+  "importancias": {
+    "edad": 0.7279804485310188,
+    "estatura_cm": 0.17275874256306148,
+    "posicion_Goalkeeper": 0.07243302561524537,
+    "posicion_Midfield": 0.010008472951365548,
+    "posicion_Defender": 0.00991669381057994,
+    "posicion_Missing": 0.006902616528728773
+  },
+  "elite_por_posicion": {
+    "Attack": 0.2963,
+    "Defender": 0.2702,
+    "Goalkeeper": 0.1528,
+    "Midfield": 0.282,
+    "Missing": 0.0157
+  },
+  "estatura_media_por_posicion": {
+    "Attack": 180.5,
+    "Defender": 183.4,
+    "Goalkeeper": 189.5,
+    "Midfield": 179.1,
+    "Missing": 179.2
+  },
+  "elite_por_edad": {
+    "<=19": 0.3743,
+    "20-23": 0.35,
+    "24-27": 0.3824,
+    "28-31": 0.3271,
+    "32+": 0.1255
+  }
+}

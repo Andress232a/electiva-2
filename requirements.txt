@@ -1,0 +1,12 @@
+# Dependencias del proyecto
+pandas
+numpy
+scikit-learn
+joblib
+matplotlib
+sqlalchemy
+pymysql
+fastapi
+uvicorn
+# Nota: el modelo se serializó con scikit-learn 1.9.1. Si al iniciar la API aparece una
+# advertencia de versión, regenera el archivo con:  python exportar_modelo.py
